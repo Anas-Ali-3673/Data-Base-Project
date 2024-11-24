@@ -107,6 +107,14 @@ public class ProductsFrame extends JFrame {
         cartButton.addActionListener(e -> new ShoppingCartFrame(shoppingCart));
         productsPanel.add(cartButton, gbc);
 
+        // Dashboard button for managers
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        gbc.gridwidth = 2;
+        JButton dashboardButton = new JButton("Dashboard");
+        dashboardButton.addActionListener(e -> new DashboardFrame(products, shoppingCart));
+        productsPanel.add(dashboardButton, gbc);
+
         add(productsPanel);
         setVisible(true);
     }
@@ -115,14 +123,14 @@ public class ProductsFrame extends JFrame {
         // Load products from a data source (e.g., database, file, etc.)
         // For demonstration purposes, we'll create a few sample products
         List<Product> products = new ArrayList<>();
-        products.add(new Product("Laptop", "Electronics", 1000, "High-performance laptop", true));
-        products.add(new Product("Smartphone", "Electronics", 800, "Latest model smartphone", true));
-        products.add(new Product("T-shirt", "Fashion", 20, "Comfortable cotton t-shirt", true));
-        products.add(new Product("Blender", "Home Appliances", 50, "High-speed blender", false));
-        products.add(new Product("Headphones", "Electronics", 150, "Noise-cancelling headphones", true));
-        products.add(new Product("Coffee Maker", "Home Appliances", 80, "Automatic coffee maker", true));
-        products.add(new Product("Sneakers", "Fashion", 60, "Stylish and comfortable sneakers", true));
-        products.add(new Product("Microwave", "Home Appliances", 120, "Compact microwave oven", false));
+        products.add(new Product("Laptop", "Electronics", 1000, "High-performance laptop", true, 10));
+        products.add(new Product("Smartphone", "Electronics", 800, "Latest model smartphone", true, 15));
+        products.add(new Product("T-shirt", "Fashion", 20, "Comfortable cotton t-shirt", true, 50));
+        products.add(new Product("Blender", "Home Appliances", 50, "High-speed blender", false, 5));
+        products.add(new Product("Headphones", "Electronics", 150, "Noise-cancelling headphones", true, 20));
+        products.add(new Product("Coffee Maker", "Home Appliances", 80, "Automatic coffee maker", true, 10));
+        products.add(new Product("Sneakers", "Fashion", 60, "Stylish and comfortable sneakers", true, 30));
+        products.add(new Product("Microwave", "Home Appliances", 120, "Compact microwave oven", false, 8));
         return products;
     }
 
@@ -178,46 +186,5 @@ public class ProductsFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(ProductsFrame::new);
-    }
-}
-
-class Product {
-    private String name;
-    private String category;
-    private double price;
-    private String description;
-    private boolean availability;
-
-    public Product(String name, String category, double price, String description, boolean availability) {
-        this.name = name;
-        this.category = category;
-        this.price = price;
-        this.description = description;
-        this.availability = availability;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public boolean isAvailable() {
-        return availability;
-    }
-
-    @Override
-    public String toString() {
-        return "Name: " + name + ", Category: " + category + ", Price: $" + price;
     }
 }

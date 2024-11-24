@@ -1,15 +1,22 @@
 package org.example.pl;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextArea;
+import javax.swing.SpinnerNumberModel;
 
 public class ProductDetailsFrame extends JFrame {
-    public ProductDetailsFrame(Product product) {
+    public ProductDetailsFrame(Product product, ShoppingCart shoppingCart) {
         setTitle("Product Details");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -63,6 +70,26 @@ public class ProductDetailsFrame extends JFrame {
 
         gbc.gridx = 1;
         detailsPanel.add(new JLabel(product.isAvailable() ? "In Stock" : "Out of Stock"), gbc);
+
+        // Quantity field
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        detailsPanel.add(new JLabel("Quantity:"), gbc);
+
+        gbc.gridx = 1;
+        JSpinner quantitySpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+        detailsPanel.add(quantitySpinner, gbc);
+
+        // Add to cart button
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        JButton addToCartButton = new JButton("Add to Cart");
+        addToCartButton.addActionListener(e -> {
+            int quantity = (int) quantitySpinner.getValue();
+            shoppingCart.addProduct(product, quantity);
+            JOptionPane.showMessageDialog(this, "Product added to cart!");
+        });
+        detailsPanel.add(addToCartButton, gbc);
 
         add(detailsPanel);
         setVisible(true);

@@ -1,26 +1,21 @@
 package org.example.pl;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 public class ProductsFrame extends JFrame {
     private List<Product> products;
     private JTable productsTable;
     private DefaultTableModel tableModel;
+    private ShoppingCart shoppingCart;
 
     public ProductsFrame() {
         setTitle("Products");
@@ -29,6 +24,7 @@ public class ProductsFrame extends JFrame {
         setLocationRelativeTo(null);
 
         products = loadProducts(); // Load products from a data source
+        shoppingCart = new ShoppingCart(); // Initialize shopping cart
 
         JPanel productsPanel = new JPanel();
         productsPanel.setBackground(new Color(173, 216, 230)); // Light blue background color
@@ -97,11 +93,19 @@ public class ProductsFrame extends JFrame {
                     String selectedProductName = (String) productsTable.getValueAt(row, 0);
                     Product selectedProduct = getProductByName(selectedProductName);
                     if (selectedProduct != null) {
-                        new ProductDetailsFrame(selectedProduct);
+                        new ProductDetailsFrame(selectedProduct, shoppingCart);
                     }
                 }
             }
         });
+
+        // Shopping cart button
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        JButton cartButton = new JButton("View Cart");
+        cartButton.addActionListener(e -> new ShoppingCartFrame(shoppingCart));
+        productsPanel.add(cartButton, gbc);
 
         add(productsPanel);
         setVisible(true);

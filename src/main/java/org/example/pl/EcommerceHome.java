@@ -69,6 +69,11 @@ public class EcommerceHome extends JFrame {
         gbc.gridx = 2;
         JLabel productsLabel = new JLabel("<html><a href=''>Products</a></html>");
         productsLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        productsLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                new ProductsFrame();
+            }
+        });
         mainPanel.add(productsLabel, gbc);
 
         gbc.gridx = 3;

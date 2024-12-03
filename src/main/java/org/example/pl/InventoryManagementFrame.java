@@ -1,174 +1,185 @@
 package org.example.pl;
 
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.List;
+import org.example.bll.ProductManager;
+import org.example.dal.ProductDal;
+import org.example.dto.ProductDto;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class InventoryManagementFrame extends JFrame {
-    private List<Product> products;
-    private JTable inventoryTable;
+    private static final Logger logger = Logger.getLogger(InventoryManagementFrame.class.getName());
+    private ProductManager productManager;
+    private JTable productTable;
     private DefaultTableModel tableModel;
 
-    public InventoryManagementFrame(List<Product> products) {
-        this.products = products;
-
+    public InventoryManagementFrame(ProductManager productManager) {
+        this.productManager = productManager;
         setTitle("Inventory Management");
         setSize(800, 600);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel inventoryPanel = new JPanel();
-        inventoryPanel.setBackground(new Color(173, 216, 230)); // Light blue background color
-        inventoryPanel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Inventory table
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        tableModel = new DefaultTableModel(new Object[]{"Name", "Category", "Price", "Stock"}, 0);
-        inventoryTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(inventoryTable);
-        inventoryPanel.add(scrollPane, gbc);
-
-        // Display inventory items
+        // Initialize components
+        initComponents();
         displayInventoryItems();
+    }
 
-        // Add product button
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
+    private void initComponents() {
+        // Create table model with column names
+        String[] columnNames = {"ID", "Name", "Description", "Price", "Stock"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        productTable = new JTable(tableModel);
+
+        // Add table to scroll pane
+        JScrollPane scrollPane = new JScrollPane(productTable);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Add button panel
+        JPanel buttonPanel = new JPanel();
         JButton addButton = new JButton("Add Product");
-        addButton.addActionListener(e -> addProduct());
-        inventoryPanel.add(addButton, gbc);
-
-        // Update product button
-        gbc.gridx = 1;
-        gbc.gridy = 1;
         JButton updateButton = new JButton("Update Product");
+        JButton deleteButton = new JButton("Delete Product");
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add action listeners for buttons
+        addButton.addActionListener(e -> addProduct());
         updateButton.addActionListener(e -> updateProduct());
-        inventoryPanel.add(updateButton, gbc);
-
-        // Remove product button
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        JButton removeButton = new JButton("Remove Product");
-        removeButton.addActionListener(e -> removeProduct());
-        inventoryPanel.add(removeButton, gbc);
-
-        add(inventoryPanel);
-        setVisible(true);
+        deleteButton.addActionListener(e -> deleteProduct());
     }
 
     private void displayInventoryItems() {
+        List<ProductDto> products = productManager.getAllProducts();
+        if (products == null) {
+            logger.severe("Product list is null.");
+            return;
+        }
         tableModel.setRowCount(0); // Clear existing rows
-        for (Product product : products) {
-            tableModel.addRow(new Object[]{product.getName(), product.getCategory(), product.getPrice(), product.getStock()});
+        for (ProductDto product : products) {
+            Object[] row = {product.getId(), product.getName(), product.getDescription(), product.getPrice(), product.getStock()};
+            tableModel.addRow(row);
         }
     }
 
     private void addProduct() {
-        JTextField nameField = new JTextField(15);
-        JTextField categoryField = new JTextField(15);
-        JTextField priceField = new JTextField(15);
-        JTextField stockField = new JTextField(15);
+        JTextField nameField = new JTextField(20);
+        JTextField descriptionField = new JTextField(20);
+        JTextField priceField = new JTextField(20);
+        JTextField stockField = new JTextField(20);
 
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        panel.add(nameField, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Category:"), gbc);
-        gbc.gridx = 1;
-        panel.add(categoryField, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Price:"), gbc);
-        gbc.gridx = 1;
-        panel.add(priceField, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Stock:"), gbc);
-        gbc.gridx = 1;
-        panel.add(stockField, gbc);
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+        panel.add(new JLabel("Name:"));
+        panel.add(nameField);
+        panel.add(new JLabel("Description:"));
+        panel.add(descriptionField);
+        panel.add(new JLabel("Price:"));
+        panel.add(priceField);
+        panel.add(new JLabel("Stock:"));
+        panel.add(stockField);
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Add Product", JOptionPane.OK_CANCEL_OPTION);
+        int result = JOptionPane.showConfirmDialog(null, panel, "Add Product", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result == JOptionPane.OK_OPTION) {
-            String name = nameField.getText();
-            String category = categoryField.getText();
-            double price = Double.parseDouble(priceField.getText());
-            int stock = Integer.parseInt(stockField.getText());
-            products.add(new Product(name, category, price, "New product", true, stock));
-            displayInventoryItems();
+            try {
+                String name = nameField.getText();
+                String description = descriptionField.getText();
+                double price = Double.parseDouble(priceField.getText());
+                int stock = Integer.parseInt(stockField.getText());
+
+                ProductDto product = new ProductDto();
+                product.setName(name);
+                product.setDescription(description);
+                product.setPrice(price);
+                product.setStock(stock);
+
+                if (productManager.addProduct(product)) {
+                    displayInventoryItems();
+                    JOptionPane.showMessageDialog(this, "Product added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to add product.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid input for price or stock.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
     private void updateProduct() {
-        int selectedRow = inventoryTable.getSelectedRow();
+        int selectedRow = productTable.getSelectedRow();
         if (selectedRow >= 0) {
-            Product product = products.get(selectedRow);
+            int productId = (int) tableModel.getValueAt(selectedRow, 0);
+            String currentName = (String) tableModel.getValueAt(selectedRow, 1);
+            String currentDescription = (String) tableModel.getValueAt(selectedRow, 2);
+            double currentPrice = (double) tableModel.getValueAt(selectedRow, 3);
+            int currentStock = (int) tableModel.getValueAt(selectedRow, 4);
 
-            JTextField nameField = new JTextField(product.getName(), 15);
-            JTextField categoryField = new JTextField(product.getCategory(), 15);
-            JTextField priceField = new JTextField(String.valueOf(product.getPrice()), 15);
-            JTextField stockField = new JTextField(String.valueOf(product.getStock()), 15);
+            JTextField nameField = new JTextField(currentName, 20);
+            JTextField descriptionField = new JTextField(currentDescription, 20);
+            JTextField priceField = new JTextField(String.valueOf(currentPrice), 20);
+            JTextField stockField = new JTextField(String.valueOf(currentStock), 20);
 
-            JPanel panel = new JPanel(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(5, 5, 5, 5);
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            panel.add(new JLabel("Name:"), gbc);
-            gbc.gridx = 1;
-            panel.add(nameField, gbc);
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            panel.add(new JLabel("Category:"), gbc);
-            gbc.gridx = 1;
-            panel.add(categoryField, gbc);
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            panel.add(new JLabel("Price:"), gbc);
-            gbc.gridx = 1;
-            panel.add(priceField, gbc);
-            gbc.gridx = 0;
-            gbc.gridy = 3;
-            panel.add(new JLabel("Stock:"), gbc);
-            gbc.gridx = 1;
-            panel.add(stockField, gbc);
+            JPanel panel = new JPanel(new GridLayout(0, 1));
+            panel.add(new JLabel("Name:"));
+            panel.add(nameField);
+            panel.add(new JLabel("Description:"));
+            panel.add(descriptionField);
+            panel.add(new JLabel("Price:"));
+            panel.add(priceField);
+            panel.add(new JLabel("Stock:"));
+            panel.add(stockField);
 
-            int result = JOptionPane.showConfirmDialog(this, panel, "Update Product", JOptionPane.OK_CANCEL_OPTION);
+            int result = JOptionPane.showConfirmDialog(null, panel, "Update Product", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (result == JOptionPane.OK_OPTION) {
-                product.setName(nameField.getText());
-                product.setCategory(categoryField.getText());
-                product.setPrice(Double.parseDouble(priceField.getText()));
-                product.setStock(Integer.parseInt(stockField.getText()));
-                displayInventoryItems();
+                try {
+                    String name = nameField.getText();
+                    String description = descriptionField.getText();
+                    double price = Double.parseDouble(priceField.getText());
+                    int stock = Integer.parseInt(stockField.getText());
+
+                    ProductDto product = new ProductDto();
+                    product.setId(productId);
+                    product.setName(name);
+                    product.setDescription(description);
+                    product.setPrice(price);
+                    product.setStock(stock);
+
+                    if (productManager.updateProduct(product)) {
+                        displayInventoryItems();
+                        JOptionPane.showMessageDialog(this, "Product updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Failed to update product.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this, "Invalid input for price or stock.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Please select a product to update.");
+            JOptionPane.showMessageDialog(this, "Please select a product to update.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void removeProduct() {
-        int selectedRow = inventoryTable.getSelectedRow();
+    private void deleteProduct() {
+        int selectedRow = productTable.getSelectedRow();
         if (selectedRow >= 0) {
-            products.remove(selectedRow);
+            int productId = (int) tableModel.getValueAt(selectedRow, 0);
+            productManager.deleteProduct(productId);
             displayInventoryItems();
         } else {
-            JOptionPane.showMessageDialog(this, "Please select a product to remove.");
+            JOptionPane.showMessageDialog(this, "Please select a product to delete.", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            ProductManager productManager = new ProductManager(new ProductDal());
+            new InventoryManagementFrame(productManager).setVisible(true);
+        });
     }
 }

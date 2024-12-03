@@ -1,21 +1,29 @@
 package org.example.pl;
 
+import org.example.bll.SignUpUser;
+import org.example.dto.SignUpDto;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SignUpFrame extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
+    private JTextField emailField;
     private JComboBox<String> roleComboBox;
+    private final SignUpUser signUp; // Final reference for SignUp
 
     public SignUpFrame(Map<String, User> users, JLabel messageLabel) {
         setTitle("Sign Up");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
+
+        signUp = new SignUpUser(); // Correctly initialize the BLL SignUp instance
 
         JPanel signUpPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -40,14 +48,22 @@ public class SignUpFrame extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        signUpPanel.add(new JLabel("Role:"), gbc);
+        signUpPanel.add(new JLabel("Email:"), gbc);
 
         gbc.gridx = 1;
-        roleComboBox = new JComboBox<>(new String[]{"customer", "delivery", "admin", "cashier", "manager"});
-        signUpPanel.add(roleComboBox, gbc);
+        emailField = new JTextField(15);
+        signUpPanel.add(emailField, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
+        signUpPanel.add(new JLabel("Role:"), gbc);
+
+        gbc.gridx = 1;
+        roleComboBox = new JComboBox<>(new String[]{"customer", "admin", "cashier", "delivery", "manager"});
+        signUpPanel.add(roleComboBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         JButton registerButton = new JButton("Register");
@@ -59,8 +75,8 @@ public class SignUpFrame extends JFrame {
     }
 
     private class RegisterAction implements ActionListener {
-        private Map<String, User> users;
-        private JLabel messageLabel;
+        private final Map<String, User> users;
+        private final JLabel messageLabel;
 
         public RegisterAction(Map<String, User> users, JLabel messageLabel) {
             this.users = users;
@@ -71,16 +87,30 @@ public class SignUpFrame extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
+            String email = emailField.getText();
             String role = (String) roleComboBox.getSelectedItem();
 
             if (users.containsKey(username)) {
                 messageLabel.setText("Username already exists. Please try again.");
             } else {
-                users.put(username, new User(username, password, role));
-                messageLabel.setText("Registration successful!");
-                new Dashboard(role);
-                dispose();
+                SignUpDto signUpDto = new SignUpDto(username, password, email, role);
+                boolean success = signUp.registerUser(signUpDto);
+                if (success) {
+                    messageLabel.setText("Registration successful!");
+//                  new Dashboard(role);
+                  // dispose();
+                } else {
+                    messageLabel.setText("Registration failed. Please try again.");
+                }
             }
         }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            Map<String, User> users = new HashMap<>();
+            JLabel messageLabel = new JLabel();
+            new SignUpFrame(users, messageLabel);
+        });
     }
 }

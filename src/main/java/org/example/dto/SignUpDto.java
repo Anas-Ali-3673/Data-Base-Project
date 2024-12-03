@@ -1,12 +1,12 @@
-package org.example.pl;
+package org.example.dto;
 
-public class User {
+public class SignUpDto {
     private String username;
     private String password;
     private String email;
     private String role;
 
-    public User(String username, String password, String email, String role) {
+    public SignUpDto(String username, String password, String email, String role) {
         this.username = username;
         this.password = password;
         this.email = email;

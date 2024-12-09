@@ -27,4 +27,11 @@ public class ProductManager {
     public List<ProductDto> getAllProducts() {
         return productDal.getAllProducts();
     }
+
+    public List<ProductDto> searchProducts(String name, String category, Double minPrice, Double maxPrice) {
+        return productDal.searchProducts(name, category, minPrice, maxPrice);
+    }
+    public ProductDto getProductById(int productId) {
+        return productDal.getProductById(productId);
+    }
 }

@@ -5,6 +5,7 @@ import org.example.pl.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,4 +38,18 @@ public class SignUp {
             return false;
         }
     }
+    public int getUserId(String username) {
+    String sql = "SELECT id FROM users WHERE username = ?";
+    try (Connection connection = DatabaseConnection.getConnection();
+         PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+        preparedStatement.setString(1, username);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.next()) {
+            return resultSet.getInt("id");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return -1; // Return -1 or handle appropriately if user ID is not found
+}
 }

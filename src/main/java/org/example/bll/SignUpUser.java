@@ -13,4 +13,7 @@ public class SignUpUser {
     public boolean registerUser(SignUpDto signUpDto) {
         return dalSignUp.registerUser(signUpDto); // Delegate to the DAL method
     }
+    public int getUserId(String username) {
+        return dalSignUp.getUserId(username);
+    }
 }

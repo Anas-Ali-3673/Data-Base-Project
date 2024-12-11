@@ -2,6 +2,11 @@ package org.example.pl;
 
 import org.example.bll.PromotionManager;
 import org.example.dto.PromotionDto;
+import org.example.dto.ProductDto;
+import org.example.bll.ProductManager;
+import org.example.bll.SignUpUser;
+import org.example.dal.ProductDal;
+import org.example.ui.UiUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -9,146 +14,233 @@ import java.awt.*;
 import java.util.List;
 
 public class PromotionManagementFrame extends JFrame {
-    private PromotionManager promotionManager;
-    private DefaultTableModel tableModel;
+    private final PromotionManager promotionManager;
+    private final ProductManager productManager;
+    private final SignUpUser userManager;
+
+    private final DefaultTableModel promotionTableModel;
+    private final DefaultTableModel productsTableModel;
+    private final DefaultTableModel usersTableModel;
+
+    private JTable usersTable;
+    private JTable productsTable;
+    private JTable promotionTable;
+
+    private JTabbedPane tabbedPane;
+
+    private User selectedUser;
+    private ProductDto selectedProduct;
 
     public PromotionManagementFrame() {
         promotionManager = new PromotionManager();
+        productManager = new ProductManager(new ProductDal());
+        userManager = new SignUpUser();
+
         setTitle("Promotion Management");
-        setSize(700, 500);
+        setSize(1200, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        initComponents();
+        promotionTableModel = createTableModel(new String[]{"Code", "Discount (%)", "Active", "Product", "User"});
+        productsTableModel = createTableModel(new String[]{"ID", "Name", "Description", "Price", "Stock", "Category", "Available"});
+        usersTableModel = createTableModel(new String[]{"User ID", "Username", "Email", "Role"});
+
+        initUI();
+        UiUtils.setButtonCursor(this);
     }
 
-    private void initComponents() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE);
+    private void initUI() {
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Arial", Font.BOLD, 16));
 
-        // Table for displaying promotions
-        String[] columnNames = {"Code", "Discount Percentage", "Active", "Product ID", "User ID"};
-        tableModel = new DefaultTableModel(columnNames, 0);
-        JTable promotionTable = new JTable(tableModel);
-        promotionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Allow only one selection at a time
+        tabbedPane.addTab("Promotions", createPromotionPanel());
+        tabbedPane.addTab("Products", createProductsPanel());
+        tabbedPane.addTab("Users", createUsersPanel());
+
+        add(tabbedPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createPromotionPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(Color.WHITE);
+
+        promotionTable = new JTable(promotionTableModel);
+        promotionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         promotionTable.setFont(new Font("Arial", Font.PLAIN, 14));
-        promotionTable.setRowHeight(30);  // Set row height for better visibility
-        JScrollPane scrollPane = new JScrollPane(promotionTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        promotionTable.setRowHeight(30);
 
-        // Load promotions
+        JScrollPane tableScrollPane = new JScrollPane(promotionTable);
+        tableScrollPane.setBorder(BorderFactory.createTitledBorder("Promotions"));
+
+        JPanel addPromotionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        JButton addPromotionButton = new JButton("Add Promotion");
+        addPromotionButton.setBackground(new Color(46, 204, 113));
+        addPromotionButton.setForeground(Color.WHITE);
+
+        addPromotionButton.addActionListener(e -> handleAddPromotion());
+
+        addPromotionPanel.add(addPromotionButton);
+
+        panel.add(tableScrollPane, BorderLayout.CENTER);
+        panel.add(addPromotionPanel, BorderLayout.SOUTH);
+
         loadPromotions();
+        return panel;
+    }
 
-        // Panel for adding new promotions with updated UI
-        JPanel addPanel = new JPanel(new GridLayout(6, 2, 10, 10));
-        addPanel.setBackground(Color.WHITE);
-        addPanel.setBorder(BorderFactory.createTitledBorder("Add New Promotion"));
+    private JPanel createProductsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        productsTable = new JTable(productsTableModel);
+        panel.add(new JScrollPane(productsTable), BorderLayout.CENTER);
+        loadProducts();
+        return panel;
+    }
 
-        addPanel.add(new JLabel("Code:"));
+    private JPanel createUsersPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        usersTable = new JTable(usersTableModel);
+        panel.add(new JScrollPane(usersTable), BorderLayout.CENTER);
+        loadUsers();
+        return panel;
+    }
+
+    private DefaultTableModel createTableModel(String[] columnNames) {
+        return new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+    }
+
+    private void loadPromotions() {
+        promotionTableModel.setRowCount(0);
+        List<PromotionDto> promotions = promotionManager.getAllPromotions();
+        for (PromotionDto promotion : promotions) {
+            ProductDto product = productManager.getProductById(promotion.getProductId());
+            User user = userManager.getUserId(promotion.getUserId());
+            promotionTableModel.addRow(new Object[]{
+                promotion.getCode(),
+                promotion.getDiscountPercentage(),
+                promotion.isActive(),
+                product != null ? product.getName() : "N/A",
+                user != null ? user.getUsername() : "N/A"
+            });
+        }
+    }
+
+    private void loadProducts() {
+        productsTableModel.setRowCount(0);
+        List<ProductDto> products = productManager.getAllProducts();
+        for (ProductDto product : products) {
+            productsTableModel.addRow(new Object[]{
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getStock(),
+                product.getCategory(),
+                product.isAvailable() ? "Yes" : "No"
+            });
+        }
+    }
+
+    private void loadUsers() {
+        usersTableModel.setRowCount(0);
+        List<User> users = userManager.getAllUsers();
+        for (User user : users) {
+            usersTableModel.addRow(new Object[]{
+                user.getUserId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole()
+            });
+        }
+    }
+
+    private void handleAddPromotion() {
+        // Navigate to Users Tab
+        tabbedPane.setSelectedIndex(2);
+        JOptionPane.showMessageDialog(this, "Please select a user.", "Step 1", JOptionPane.INFORMATION_MESSAGE);
+
+        usersTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedUserRow = usersTable.getSelectedRow();
+                if (selectedUserRow != -1) {
+                    selectedUser = new User(
+                        (int) usersTableModel.getValueAt(selectedUserRow, 0),
+                        (String) usersTableModel.getValueAt(selectedUserRow, 1),
+                        (String) usersTableModel.getValueAt(selectedUserRow, 2),
+                        (String) usersTableModel.getValueAt(selectedUserRow, 3),
+                        "defaultRole" // Provide the fifth argument here
+                    );
+
+                    // Navigate to Products Tab
+                    tabbedPane.setSelectedIndex(1);
+                    JOptionPane.showMessageDialog(this, "Please select a product.", "Step 2", JOptionPane.INFORMATION_MESSAGE);
+
+                    productsTable.getSelectionModel().addListSelectionListener(ev -> {
+                        if (!ev.getValueIsAdjusting()) {
+                            int selectedProductRow = productsTable.getSelectedRow();
+                            if (selectedProductRow != -1) {
+                                selectedProduct = new ProductDto(
+                                    (int) productsTableModel.getValueAt(selectedProductRow, 0),
+                                    (String) productsTableModel.getValueAt(selectedProductRow, 1),
+                                    (String) productsTableModel.getValueAt(selectedProductRow, 2),
+                                    (double) productsTableModel.getValueAt(selectedProductRow, 3),
+                                    (int) productsTableModel.getValueAt(selectedProductRow, 4),
+                                    (String) productsTableModel.getValueAt(selectedProductRow, 5),
+                                    "Yes".equals(productsTableModel.getValueAt(selectedProductRow, 6))
+                                );
+
+                                // Show Promotion Details Dialog
+                                showPromotionDetailsDialog();
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private void showPromotionDetailsDialog() {
         JTextField codeField = new JTextField();
-        addPanel.add(codeField);
-
-        addPanel.add(new JLabel("Discount Percentage:"));
         JTextField discountField = new JTextField();
-        addPanel.add(discountField);
-
-        addPanel.add(new JLabel("Active:"));
         JCheckBox activeCheckBox = new JCheckBox();
-        addPanel.add(activeCheckBox);
 
-        addPanel.add(new JLabel("Product ID (optional):"));
-        JTextField productIdField = new JTextField();
-        addPanel.add(productIdField);
+        Object[] message = {
+            "Promotion Code:", codeField,
+            "Discount (%):", discountField,
+            "Active:", activeCheckBox
+        };
 
-        addPanel.add(new JLabel("User ID (optional):"));
-        JTextField userIdField = new JTextField();
-        addPanel.add(userIdField);
+        int option = JOptionPane.showConfirmDialog(this, message, "Enter Promotion Details", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            String code = codeField.getText().trim();
+            String discountText = discountField.getText().trim();
 
-        JButton addButton = new JButton("Add Promotion");
-        addButton.setFont(new Font("Arial", Font.BOLD, 14));
-        addButton.setBackground(new Color(46, 204, 113));
-        addButton.setForeground(Color.WHITE);
-        addButton.setFocusPainted(false);
-        addButton.addActionListener(e -> {
-            String code = codeField.getText();
-            double discount = Double.parseDouble(discountField.getText());
+            if (code.isEmpty() || discountText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Code and Discount are required.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            double discount;
+            try {
+                discount = Double.parseDouble(discountText);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid discount value.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             boolean isActive = activeCheckBox.isSelected();
-            Integer productId = productIdField.getText().isEmpty() ? null : Integer.parseInt(productIdField.getText());
-            Integer userId = userIdField.getText().isEmpty() ? null : Integer.parseInt(userIdField.getText());
-            PromotionDto promotion = new PromotionDto(code, discount, isActive, productId, userId);
+            PromotionDto promotion = new PromotionDto(code, discount, isActive, selectedProduct.getId(), selectedUser.getUserId());
+
             if (promotionManager.addPromotion(promotion)) {
                 loadPromotions();
                 JOptionPane.showMessageDialog(this, "Promotion added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "Failed to add promotion.", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        });
-        addPanel.add(addButton);
-
-        // Panel for updating and deleting promotions with updated UI
-        JPanel managePanel = new JPanel();
-        managePanel.setBackground(Color.WHITE);
-        managePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 10));
-
-        JButton updateButton = new JButton("Update Promotion");
-        updateButton.setFont(new Font("Arial", Font.BOLD, 14));
-        updateButton.setBackground(new Color(30, 144, 255));
-        updateButton.setForeground(Color.WHITE);
-        updateButton.setFocusPainted(false);
-        updateButton.addActionListener(e -> {
-            int selectedRow = promotionTable.getSelectedRow();
-            if (selectedRow >= 0) {
-                String code = (String) tableModel.getValueAt(selectedRow, 0);
-                double discount = Double.parseDouble(JOptionPane.showInputDialog("Enter new discount percentage:"));
-                boolean isActive = JOptionPane.showConfirmDialog(this, "Is the promotion active?", "Update Promotion", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-                Integer productId = tableModel.getValueAt(selectedRow, 3) == null ? null : Integer.parseInt(tableModel.getValueAt(selectedRow, 3).toString());
-                Integer userId = tableModel.getValueAt(selectedRow, 4) == null ? null : Integer.parseInt(tableModel.getValueAt(selectedRow, 4).toString());
-                PromotionDto promotion = new PromotionDto(code, discount, isActive, productId, userId);
-                if (promotionManager.updatePromotion(promotion)) {
-                    loadPromotions();
-                    JOptionPane.showMessageDialog(this, "Promotion updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Failed to update promotion.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Please select a promotion to update.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        managePanel.add(updateButton);
-
-        JButton deleteButton = new JButton("Delete Promotion");
-        deleteButton.setFont(new Font("Arial", Font.BOLD, 14));
-        deleteButton.setBackground(new Color(255, 99, 71));
-        deleteButton.setForeground(Color.WHITE);
-        deleteButton.setFocusPainted(false);
-        deleteButton.addActionListener(e -> {
-            int selectedRow = promotionTable.getSelectedRow();
-            if (selectedRow >= 0) {
-                String code = (String) tableModel.getValueAt(selectedRow, 0);
-                if (promotionManager.deletePromotion(code)) {
-                    loadPromotions();
-                    JOptionPane.showMessageDialog(this, "Promotion deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Failed to delete promotion.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Please select a promotion to delete.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        managePanel.add(deleteButton);
-
-        mainPanel.add(addPanel, BorderLayout.NORTH);
-        mainPanel.add(managePanel, BorderLayout.SOUTH);
-        add(mainPanel);
-    }
-
-    private void loadPromotions() {
-        tableModel.setRowCount(0);
-        List<PromotionDto> promotions = promotionManager.getAllPromotions();
-        for (PromotionDto promotion : promotions) {
-            Object[] row = {promotion.getCode(), promotion.getDiscountPercentage(), promotion.isActive(), promotion.getProductId(), promotion.getUserId()};
-            tableModel.addRow(row);
         }
     }
 

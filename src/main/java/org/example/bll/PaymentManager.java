@@ -26,8 +26,9 @@ public class PaymentManager {
         return paymentDal.isUserExists(userId);
     }
 
-    public void savePaymentToDatabase(PaymentDto paymentDto) {
+    public boolean savePaymentToDatabase(PaymentDto paymentDto) {
         paymentDal.savePaymentToDatabase(paymentDto);
+                return true;
     }
 
     public boolean placeOrder(int userId, ShoppingCart shoppingCart) {

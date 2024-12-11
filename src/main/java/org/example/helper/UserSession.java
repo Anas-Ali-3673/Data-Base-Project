@@ -4,6 +4,7 @@ public class UserSession {
     private static UserSession instance;
     public int userId;
     private String username;
+    public String role;
 
     // Private constructor to prevent instantiation
     private UserSession() {}
@@ -17,9 +18,10 @@ public class UserSession {
     }
 
     // Set user details
-    public void setUserDetails(int userId, String username) {
+    public void setUserDetails(int userId, String username,String role) {
         this.userId = userId;
         this.username = username;
+        this.role = role;
     }
 
     // Getters for user details
@@ -35,5 +37,9 @@ public class UserSession {
     public void clearSession() {
         userId = 0;
         username = null;
+    }
+
+    public String getRole() {
+        return role;
     }
 }

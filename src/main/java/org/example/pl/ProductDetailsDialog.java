@@ -4,6 +4,7 @@ import org.example.dto.ProductDto;
 import org.example.dal.ShoppingCart;
 import org.example.bll.PromotionManager;
 import org.example.dto.PromotionDto;
+import org.example.ui.UiUtils;
 
 import javax.swing.*;
 import java.awt.*;

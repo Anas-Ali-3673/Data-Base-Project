@@ -3,6 +3,7 @@ package org.example.pl;
 import org.example.dal.ShoppingCart;
 import org.example.dto.ProductDto;
 import org.example.helper.UserSession;
+import org.example.ui.UiUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,6 +77,7 @@ public class ShoppingCartPanel extends JPanel {
 
         // Initialize cart display
         updateCart();
+        UiUtils.setButtonCursor(this);
     }
 
     private void styleButton(JButton button, Color bgColor, Color fgColor) {

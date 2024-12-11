@@ -6,6 +6,8 @@ import org.example.bll.OrderManager;
 import org.example.dto.OrderItem;
 import org.example.dto.OrderStatus;
 import org.example.dto.ProductDto;
+import org.example.ui.UiUtils;
+
 import javax.swing.*;
 
 public class DeliveryConfirmationFrame extends JFrame {
@@ -21,6 +23,7 @@ public class DeliveryConfirmationFrame extends JFrame {
         setLocationRelativeTo(null);
 
         initComponents();
+        UiUtils.setButtonCursor(this);
     }
 
     private void initComponents() {
@@ -92,18 +95,18 @@ public class DeliveryConfirmationFrame extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            String orderIdStr = JOptionPane.showInputDialog(null, "Enter Order ID:", "Order ID", JOptionPane.QUESTION_MESSAGE);
-            if (orderIdStr != null && !orderIdStr.trim().isEmpty()) {
-                try {
-                    int orderId = Integer.parseInt(orderIdStr.trim());
-                    OrderManager orderManager = new OrderManager();
-                    new DeliveryConfirmationFrame(orderManager, orderId).setVisible(true);
-                } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog(null, "Invalid Order ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-    }
+    // public static void main(String[] args) {
+    //     SwingUtilities.invokeLater(() -> {
+    //         String orderIdStr = JOptionPane.showInputDialog(null, "Enter Order ID:", "Order ID", JOptionPane.QUESTION_MESSAGE);
+    //         if (orderIdStr != null && !orderIdStr.trim().isEmpty()) {
+    //             try {
+    //                 int orderId = Integer.parseInt(orderIdStr.trim());
+    //                 OrderManager orderManager = new OrderManager();
+    //                 new DeliveryConfirmationFrame(orderManager, orderId).setVisible(true);
+    //             } catch (NumberFormatException e) {
+    //                 JOptionPane.showMessageDialog(null, "Invalid Order ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+    //             }
+    //         }
+    //     });
+    // }
 }

@@ -1,24 +1,13 @@
 package org.example.pl;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.*;
 import org.example.bll.PaymentManager;
 import org.example.dal.ShoppingCart;
-import org.example.helper.UserSession;
 import org.example.dto.PaymentDto;
+import org.example.helper.UserSession;
+import org.example.ui.UiUtils;
 
 public class PaymentFrame extends JFrame {
     private final ShoppingCart shoppingCart;
@@ -26,110 +15,210 @@ public class PaymentFrame extends JFrame {
     private final int userId;
     private final PaymentManager paymentManager;
 
+    private JTextField accountNumberField;
+    private JComboBox<String> paymentMethodComboBox;
+    private JLabel accountNumberErrorLabel;
+
     public PaymentFrame(ShoppingCart shoppingCart, JFrame parentFrame, UserSession userSession) {
         this.shoppingCart = shoppingCart;
         this.parentFrame = parentFrame;
-        this.userId = userSession.getUserId(); // Get the user ID from the UserSession
+        this.userId = userSession.getUserId(); // Ensure getUserId() returns int
         this.paymentManager = new PaymentManager();
 
         setTitle("Payment Details");
-        setSize(500, 400);
+        setSize(500, 450);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         // Main Panel
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBackground(new Color(245, 245, 245));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         add(mainPanel);
 
-        // Payment Form Panel
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Enter Payment Details"));
-
-        formPanel.add(createStyledLabel("Payment Method:"));
-        String[] paymentMethods = {"Credit Card", "Easypaisa", "JazzCash"};
-        JComboBox<String> paymentMethodComboBox = new JComboBox<>(paymentMethods);
-        styleComboBox(paymentMethodComboBox);
-        formPanel.add(paymentMethodComboBox);
-
-        formPanel.add(createStyledLabel("Account Number:"));
-        JTextField accountNumberField = new JTextField(20);
-        styleTextField(accountNumberField);
-        formPanel.add(accountNumberField);
-
-        formPanel.add(createStyledLabel("Total Amount:"));
-        JLabel totalAmountLabel = new JLabel("$" + shoppingCart.getTotalCost());
-        totalAmountLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        totalAmountLabel.setForeground(new Color(44, 62, 80));
-        formPanel.add(totalAmountLabel);
-
+        // Payment Form
+        JPanel formPanel = createFormPanel();
         mainPanel.add(formPanel, BorderLayout.CENTER);
 
         // Button Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        JButton payButton = new JButton("Pay Now");
-        styleButton(payButton, new Color(46, 204, 113), Color.GREEN);
-        JButton cancelButton = new JButton("Cancel");
-        styleButton(cancelButton, new Color(231, 76, 60), Color.RED);
+        JPanel buttonPanel = createButtonPanel();
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        UiUtils.setButtonCursor(this);
+    }
 
-        payButton.addActionListener(e -> processPayment(paymentMethodComboBox.getSelectedItem().toString(), accountNumberField.getText()));
+    private JPanel createFormPanel() {
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        formPanel.setBackground(new Color(255, 255, 255));
+        formPanel.setBorder(new CompoundBorder(
+            BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(189, 195, 199)),
+                "Enter Payment Details",
+                TitledBorder.LEFT,
+                TitledBorder.TOP,
+                new Font("Arial", Font.BOLD, 14),
+                new Color(52, 73, 94)
+            ),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        // Payment Method
+        formPanel.add(createStyledLabel("Payment Method:"));
+        paymentMethodComboBox = createPaymentMethodComboBox();
+        formPanel.add(paymentMethodComboBox);
+
+        // Account Number
+        formPanel.add(createStyledLabel("Account Number:"));
+        accountNumberField = createStyledTextField();
+        formPanel.add(accountNumberField);
+
+        // Account Number Error
+        formPanel.add(new JLabel()); // Empty cell
+        accountNumberErrorLabel = createErrorLabel();
+        formPanel.add(accountNumberErrorLabel);
+
+        // Total Amount
+        formPanel.add(createStyledLabel("Total Amount:"));
+        JLabel totalAmountLabel = createTotalAmountLabel();
+        formPanel.add(totalAmountLabel);
+
+        return formPanel;
+    }
+
+    private JPanel createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        buttonPanel.setBackground(new Color(245, 245, 245));
+
+        // Pay Now Button
+        JButton payButton = createStyledButton("Pay Now", new Color(46, 204, 113));
+        payButton.addActionListener(e -> processPayment());
+
+        // Cancel Button
+        JButton cancelButton = createStyledButton("Cancel", new Color(231, 76, 60));
         cancelButton.addActionListener(e -> dispose());
 
         buttonPanel.add(payButton);
         buttonPanel.add(cancelButton);
 
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        return buttonPanel;
     }
 
     private JLabel createStyledLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Arial", Font.BOLD, 14));
-        label.setForeground(new Color(44, 62, 80));
+        label.setForeground(new Color(52, 73, 94));
         return label;
     }
 
-    private void styleTextField(JTextField textField) {
+    private JTextField createStyledTextField() {
+        JTextField textField = new JTextField(20);
         textField.setFont(new Font("Arial", Font.PLAIN, 14));
-        textField.setForeground(new Color(44, 62, 80));
-        textField.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
+        textField.setForeground(new Color(52, 73, 94));
+        textField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(189, 195, 199)),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        return textField;
     }
 
-    private void styleComboBox(JComboBox<String> comboBox) {
+    private JLabel createErrorLabel() {
+        JLabel errorLabel = new JLabel();
+        errorLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        errorLabel.setForeground(Color.RED);
+        return errorLabel;
+    }
+
+    private JComboBox<String> createPaymentMethodComboBox() {
+        String[] paymentMethods = {"Credit Card", "Easypaisa", "JazzCash"};
+        JComboBox<String> comboBox = new JComboBox<>(paymentMethods);
         comboBox.setFont(new Font("Arial", Font.PLAIN, 14));
-        comboBox.setForeground(new Color(44, 62, 80));
-        comboBox.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199), 1));
+        comboBox.setForeground(new Color(52, 73, 94));
+        comboBox.setBorder(BorderFactory.createLineBorder(new Color(189, 195, 199)));
+        return comboBox;
     }
 
-    private void styleButton(JButton button, Color bgColor, Color fgColor) {
-        button.setBackground(bgColor);
-        button.setForeground(fgColor);
-        button.setFocusPainted(false);
+    private JLabel createTotalAmountLabel() {
+        JLabel label = new JLabel("$" + String.format("%.2f", shoppingCart.getTotalCost()));
+        label.setFont(new Font("Arial", Font.BOLD, 16));
+        label.setForeground(new Color(52, 73, 94));
+        return label;
+    }
+
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 14));
-        button.setBorder(BorderFactory.createLineBorder(bgColor.darker(), 1));
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(52, 73, 94)),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
+        return button;
     }
 
-    private void processPayment(String paymentMethod, String accountNumber) {
+    private void processPayment() {
+        String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
+        String accountNumber = accountNumberField.getText().trim();
+
+        accountNumberErrorLabel.setText(""); // Clear error label
+
         if (!paymentManager.isUserExists(userId)) {
             JOptionPane.showMessageDialog(this, "User does not exist.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-    
+
+        String validationError = validateAccountNumber(accountNumber, paymentMethod);
+        if (validationError != null) {
+            accountNumberErrorLabel.setText(validationError);
+            return;
+        }
+
         double totalAmount = shoppingCart.getTotalCost();
         PaymentDto paymentDto = new PaymentDto(userId, paymentMethod, accountNumber, totalAmount);
-        paymentManager.savePaymentToDatabase(paymentDto);
-    
-        // Simulate successful payment
-        JOptionPane.showMessageDialog(this, "Payment successful using " + paymentMethod + "!", "Success", JOptionPane.INFORMATION_MESSAGE);
-    
-        // Place order
-        if (paymentManager.placeOrder(userId, shoppingCart)) {
-            JOptionPane.showMessageDialog(this, "Order placed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+        boolean paymentSaved = paymentManager.savePaymentToDatabase(paymentDto);
+        if (!paymentSaved) {
+            JOptionPane.showMessageDialog(this, "Failed to save payment details.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        boolean orderPlaced = paymentManager.placeOrder(userId, shoppingCart);
+        if (orderPlaced) {
+            JOptionPane.showMessageDialog(this, "Payment and order placed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            shoppingCart.clearCart();
+            parentFrame.dispose();
+            dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Failed to place order.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-    
-        shoppingCart.clearCart();
-        parentFrame.dispose(); // Close the cart panel
-        dispose(); // Close the payment frame
+    }
+
+    private String validateAccountNumber(String accountNumber, String paymentMethod) {
+        if (accountNumber.isEmpty()) {
+            return "Account number cannot be empty.";
+        }
+        if (!accountNumber.matches("\\d+")) {
+            return "Account number must be numeric.";
+        }
+        int length = accountNumber.length();
+        if ("Easypaisa".equals(paymentMethod) || "JazzCash".equals(paymentMethod)) {
+            if (length != 11) {
+                return "Account number must be 11 digits for Easypaisa/JazzCash.";
+            }
+        } else if ("Credit Card".equals(paymentMethod)) {
+            if (length != 14 && length != 16) {
+                return "Credit card number must be 14 or 16 digits.";
+            }
+        }
+        return null; 
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            UserSession userSession = UserSession.getInstance();
+            String role = userSession.getRole();
+            int userId = userSession.getUserId(); // Ensure getUserId() returns int
+            new PaymentFrame(new ShoppingCart(userId), new JFrame(), userSession).setVisible(true);
+        });
     }
 }

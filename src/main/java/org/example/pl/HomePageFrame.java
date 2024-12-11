@@ -4,13 +4,15 @@ import org.example.bll.ProductManager;
 import org.example.bll.SignInUser;
 import org.example.dal.ProductDal;
 import org.example.bll.OrderManager;
-import org.example.dal.ShoppingCart;
 import org.example.dto.SignUpDto;
+import org.example.ui.UiUtils;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.Map;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.Map;
 
 public class HomePageFrame extends JFrame {
     private String userRole;
@@ -27,195 +29,104 @@ public class HomePageFrame extends JFrame {
         this.users = users;
         this.messageLabel = messageLabel;
         this.signInUser = new SignInUser(new org.example.dal.SignIn());
+
         setTitle("Home Page");
-        setSize(600, 500);  // Adjusted frame size for better layout
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         initComponents();
+        UiUtils.setButtonCursor(this);
     }
 
     private void initComponents() {
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel contentPanel = new JPanel(new BorderLayout());
 
-        // Add buttons
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JButton inventoryButton = createStyledButton("Inventory Management");
-        inventoryButton.addActionListener(e -> openInventoryManagement());
-        mainPanel.add(inventoryButton, gbc);
+        // Header with animation
+        JLabel headerLabel = new JLabel("Welcome to Your Dashboard", SwingConstants.CENTER);
+        headerLabel.setFont(new Font("Serif", Font.BOLD, 24));
+        headerLabel.setForeground(new Color(0, 102, 204));
+        Timer animationTimer = new Timer(100, null);
+        animationTimer.addActionListener(e -> {
+            headerLabel.setForeground(new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
+        });
+        animationTimer.start();
+        contentPanel.add(headerLabel, BorderLayout.NORTH);
 
-        gbc.gridy = 1;
-        JButton cartButton = createStyledButton("Shopping Cart");
-        cartButton.addActionListener(e -> openShoppingCart());
-        mainPanel.add(cartButton, gbc);
+        // Center Panel for cards
+        JPanel cardPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        cardPanel.setBorder(BorderFactory.createEmptyBorder(140, 0, 0, 0)); // Top margin added
+        cardPanel.setOpaque(false);
+        cardPanel.add(createFeatureCard("Inventory Management", "Manage your inventory efficiently.", e -> openInventoryManagement(), new Color(255, 223, 186)));
+        cardPanel.add(createFeatureCard("Order Tracking", "Track your order statuses.", e -> openOrderTracking(), new Color(186, 223, 255)));
+        cardPanel.add(createFeatureCard("Logout", "Sign out of your account.", e -> logout(), new Color(186, 255, 186)));
+        contentPanel.add(cardPanel, BorderLayout.CENTER);
 
-        gbc.gridy = 2;
-        JButton orderTrackingButton = createStyledButton("Order Tracking");
-        orderTrackingButton.addActionListener(e -> openOrderTracking());
-        mainPanel.add(orderTrackingButton, gbc);
+        // Footer
+        JLabel footerLabel = new JLabel("Copyright © E-Commerce Store | All Rights Reserved", SwingConstants.CENTER);
+        footerLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        footerLabel.setForeground(Color.GRAY);
+        contentPanel.add(footerLabel, BorderLayout.SOUTH);
 
-        gbc.gridy = 3;
-        JButton profileButton = createStyledButton("User Profile");
-        profileButton.addActionListener(e -> openUserProfile());
-        mainPanel.add(profileButton, gbc);
+        // Gradient background
+        JPanel gradientPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                GradientPaint gradient = new GradientPaint(0, 0, new Color(135, 206, 250), getWidth(), getHeight(), new Color(0, 191, 255));
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        gradientPanel.setLayout(new BorderLayout());
+        gradientPanel.add(contentPanel);
 
-        // Add a Logout button
-        gbc.gridy = 4;
-        JButton logoutButton = createStyledButton("Logout");
-        logoutButton.addActionListener(e -> logout());
-        mainPanel.add(logoutButton, gbc);
-
-        add(mainPanel);
+        add(gradientPanel);
     }
 
-    private JButton createStyledButton(String text) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(200, 40));
-        button.setFont(new Font("Arial", Font.PLAIN, 16));
-        button.setBackground(new Color(46, 204, 113));
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createRaisedBevelBorder());
-        return button;
+    private JPanel createFeatureCard(String title, String description, ActionListener action, Color cardColor) {
+        JPanel card = new JPanel();
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        card.setBackground(cardColor);
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setForeground(Color.DARK_GRAY);
+
+        JLabel descriptionLabel = new JLabel("<html><center>" + description + "</center></html>", SwingConstants.CENTER);
+        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        descriptionLabel.setForeground(Color.GRAY);
+
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(descriptionLabel, BorderLayout.CENTER);
+
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                action.actionPerformed(null);
+            }
+        });
+
+        card.setPreferredSize(new Dimension(200, 150));
+        return card;
     }
 
     private void openInventoryManagement() {
         new InventoryManagementFrame(new ProductManager(new ProductDal()), userRole, userId, username, users, messageLabel).setVisible(true);
-    }
-    private void openShoppingCart() {
-        new ShoppingCartPanel(new ShoppingCart(), this, userId).setVisible(true);
     }
 
     private void openOrderTracking() {
         new OrderTrackingFrame(new OrderManager(), userId).setVisible(true);
     }
 
-    private void openUserProfile() {
-        // Create the profile window
-        JFrame profileFrame = new JFrame("User Profile");
-        profileFrame.setSize(400, 350);  // Adjusted size for better layout
-        profileFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        profileFrame.setLocationRelativeTo(this);
-
-        // Main panel for the profile window
-        JPanel profilePanel = new JPanel();
-        profilePanel.setLayout(new BoxLayout(profilePanel, BoxLayout.Y_AXIS));
-        profilePanel.setBackground(new Color(250, 250, 250));
-
-        // Create a panel for the profile picture
-        JPanel picturePanel = new JPanel();
-        picturePanel.setBackground(Color.WHITE);
-        JLabel pictureLabel = new JLabel();
-        pictureLabel.setHorizontalAlignment(JLabel.CENTER);
-        pictureLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        
-        // Load and set the profile image
-        try {
-            ImageIcon profileImage = new ImageIcon("src/main/resources/profile.jpg");
-            Image scaledImage = profileImage.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-            pictureLabel.setIcon(new ImageIcon(scaledImage));
-        } catch (Exception e) {
-            pictureLabel.setText("Profile Picture Not Found");
-        }
-        
-        picturePanel.add(pictureLabel);
-        profilePanel.add(picturePanel);
-
-        // Create a panel for user information
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new GridLayout(3, 2, 10, 10));
-        infoPanel.setBackground(Color.WHITE);
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Display the user info in labels (this can be updated dynamically)
-        infoPanel.add(new JLabel("Username:"));
-        infoPanel.add(new JLabel(username));  // Replace with dynamic data
-        infoPanel.add(new JLabel("Email:"));
-        infoPanel.add(new JLabel("user123@example.com"));  // Replace with dynamic data
-        infoPanel.add(new JLabel("Role:"));
-        infoPanel.add(new JLabel(userRole));  // Display the role (Admin, Customer, etc.)
-
-        profilePanel.add(infoPanel);
-
-        // Add action buttons
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.setBackground(Color.WHITE);
-
-        JButton editButton = createStyledButton("Edit Profile");
-        editButton.addActionListener(e -> editProfile());
-        buttonPanel.add(editButton);
-
-        JButton changePasswordButton = createStyledButton("Change Password");
-        changePasswordButton.addActionListener(e -> changePassword());
-        buttonPanel.add(changePasswordButton);
-
-        JButton logoutButton = createStyledButton("Logout");
-        logoutButton.addActionListener(e -> logout());
-        buttonPanel.add(logoutButton);
-
-        profilePanel.add(buttonPanel);
-
-        // Finalize the profile frame
-        profileFrame.add(profilePanel);
-        profileFrame.setVisible(true);
-    }
-
-    private void editProfile() {
-        // Create a dialog for editing profile information
-        JDialog editDialog = new JDialog(this, "Edit Profile", true);
-        editDialog.setSize(300, 200);
-        editDialog.setLocationRelativeTo(this);
-
-        JPanel editPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        editPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JTextField usernameField = new JTextField(username);
-        JTextField emailField = new JTextField("user123@example.com"); // Replace with dynamic data
-
-        editPanel.add(new JLabel("Username:"));
-        editPanel.add(usernameField);
-        editPanel.add(new JLabel("Email:"));
-        editPanel.add(emailField);
-
-        JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(e -> {
-            // Update the user information
-            String newUsername = usernameField.getText();
-            String newEmail = emailField.getText();
-            // Implement logic to save the updated information
-            JOptionPane.showMessageDialog(this, "Profile updated successfully.", "Edit Profile", JOptionPane.INFORMATION_MESSAGE);
-            editDialog.dispose();
-        });
-
-        editPanel.add(new JLabel()); // Empty label for spacing
-        editPanel.add(saveButton);
-
-        editDialog.add(editPanel);
-        editDialog.setVisible(true);
-    }
-
-    private void changePassword() {
-        String newPassword = JOptionPane.showInputDialog(this, "Enter new password:");
-        if (newPassword != null && !newPassword.isEmpty()) {
-            if (signInUser.changePassword(username, newPassword)) {
-                JOptionPane.showMessageDialog(this, "Password changed successfully.", "Change Password", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to change password.", "Change Password", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
     private void logout() {
-        // Implement logout functionality, can be customized as needed
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Logout", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            dispose(); // Close the current frame
-            new SignInFrame(users, messageLabel).setVisible(true); // Navigate back to sign-in page
+            dispose();
+            new SignInFrame(users, messageLabel).setVisible(true);
         }
     }
 
@@ -224,7 +135,6 @@ public class HomePageFrame extends JFrame {
             Map<String, SignUpDto> users = new HashMap<>();
             JLabel messageLabel = new JLabel();
 
-            // Prompt the user for the username and role
             String username = JOptionPane.showInputDialog(null, "Enter your username:", "Username", JOptionPane.QUESTION_MESSAGE);
             String[] roles = {"customer", "admin", "manager"};
             String userRole = (String) JOptionPane.showInputDialog(null, "Select your role:", "Role", JOptionPane.QUESTION_MESSAGE, null, roles, roles[0]);

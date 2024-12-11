@@ -21,6 +21,7 @@ import javax.swing.table.DefaultTableModel;
 import org.example.bll.OrderManager;
 import org.example.bll.SignInUser;
 import org.example.dto.Order;
+import org.example.ui.UiUtils;
 
 public class OrderTrackingFrame extends JFrame {
     private final OrderManager orderManager;
@@ -35,6 +36,7 @@ public class OrderTrackingFrame extends JFrame {
         setLocationRelativeTo(null);
 
         initComponents();
+        UiUtils.setButtonCursor(this);
     }
 
     private void initComponents() {

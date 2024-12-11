@@ -2,6 +2,7 @@ package org.example.pl;
 
 import org.example.bll.ProductManager;
 import org.example.dto.ProductDto;
+import org.example.ui.UiUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -44,6 +45,7 @@ public class ProductSearchPanel extends JPanel {
         tableModel = new DefaultTableModel(columnNames, 0);
         JTable productTable = new JTable(tableModel);
         add(new JScrollPane(productTable), BorderLayout.CENTER);
+        UiUtils.setButtonCursor(this);
     }
 
     private void searchProducts() {

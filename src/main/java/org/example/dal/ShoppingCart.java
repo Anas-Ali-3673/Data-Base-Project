@@ -10,8 +10,10 @@ import java.util.Map;
 
 public class ShoppingCart {
     private Map<ProductDto, Integer> cartItems;
+    private int userId;
 
-    public ShoppingCart() {
+    public ShoppingCart(int userId) {
+        this.userId = userId;
         cartItems = new HashMap<>();
         loadCartFromDatabase();
     }
@@ -29,6 +31,7 @@ public class ShoppingCart {
         cartItems.remove(product);
         saveCartToDatabase();
     }
+
     public void updateProductQuantity(String productName, int quantity) {
         for (Map.Entry<ProductDto, Integer> entry : cartItems.entrySet()) {
             if (entry.getKey().getName().equals(productName)) {
@@ -63,17 +66,19 @@ public class ShoppingCart {
             }
 
             // Clear existing cart items in the database
-            String clearSql = "DELETE FROM cart_items";
+            String clearSql = "DELETE FROM cart_items WHERE user_id = ?";
             try (PreparedStatement clearStmt = connection.prepareStatement(clearSql)) {
+                clearStmt.setInt(1, userId);
                 clearStmt.executeUpdate();
             }
 
             // Insert current cart items into the database
-            String insertSql = "INSERT INTO cart_items (product_id, quantity) VALUES (?, ?)";
+            String insertSql = "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, ?)";
             try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
                 for (Map.Entry<ProductDto, Integer> entry : cartItems.entrySet()) {
-                    insertStmt.setInt(1, entry.getKey().getId());
-                    insertStmt.setInt(2, entry.getValue());
+                    insertStmt.setInt(1, userId); // Set the user ID
+                    insertStmt.setInt(2, entry.getKey().getId()); // Set the product ID
+                    insertStmt.setInt(3, entry.getValue()); // Set the quantity
                     insertStmt.addBatch();
                 }
                 insertStmt.executeBatch();
@@ -91,18 +96,21 @@ public class ShoppingCart {
 
             String sql = "SELECT p.id, p.name, p.description, p.price, p.stock, ci.quantity " +
                          "FROM cart_items ci " +
-                         "JOIN products p ON ci.product_id = p.id";
-            try (PreparedStatement stmt = connection.prepareStatement(sql);
-                 ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    ProductDto product = new ProductDto();
-                    product.setId(rs.getInt("id"));
-                    product.setName(rs.getString("name"));
-                    product.setDescription(rs.getString("description"));
-                    product.setPrice(rs.getDouble("price"));
-                    product.setStock(rs.getInt("stock"));
-                    int quantity = rs.getInt("quantity");
-                    cartItems.put(product, quantity);
+                         "JOIN products p ON ci.product_id = p.id " +
+                         "WHERE ci.user_id = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setInt(1, userId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        ProductDto product = new ProductDto();
+                        product.setId(rs.getInt("id"));
+                        product.setName(rs.getString("name"));
+                        product.setDescription(rs.getString("description"));
+                        product.setPrice(rs.getDouble("price"));
+                        product.setStock(rs.getInt("stock"));
+                        int quantity = rs.getInt("quantity");
+                        cartItems.put(product, quantity);
+                    }
                 }
             }
         } catch (SQLException e) {

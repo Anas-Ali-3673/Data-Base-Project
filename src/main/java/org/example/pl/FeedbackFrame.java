@@ -2,6 +2,7 @@ package org.example.pl;
 
 import org.example.dto.Feedback;
 import org.example.dto.ProductDto;
+import org.example.ui.UiUtils;
 import org.example.bll.FeedbackManager;
 
 import javax.swing.*;
@@ -105,6 +106,7 @@ public class FeedbackFrame extends JFrame {
 
         // Add the main panel to the frame
         add(mainPanel);
+        UiUtils.setButtonCursor(this);
     }
 
 }
